@@ -1,0 +1,41 @@
+name: dockerhub CI for drexml environment
+
+on:
+  push:
+    # triggers when some of these files change
+    paths:
+      - 'nextflow_pipeline/docker/cell_ot/Dockerfile'
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_REGISTRY }}
+          tags: |
+            type=raw,value=cell_ot-{{branch}}-{{sha}}
+            type=raw,value=cell_ot-latest-{{branch}} 
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          file: ./nextflow_pipeline/docker/cell_ot/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
