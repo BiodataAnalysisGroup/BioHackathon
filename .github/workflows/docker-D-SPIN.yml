@@ -5,13 +5,13 @@ on:
     branches: 
       - main
     paths:
-      - 'nextflow_pipeline/docker/cell_ot/Dockerfile'
+      - 'nextflow_pipeline/docker/D-SPIN/Dockerfile'
 
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: cell_ot
+  IMAGE_NAME: ${{ github.actor }}/D-SPIN
 
 
 jobs:
