@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir \
     igraph==0.10.8
 
 # Start a shell when the container runs
-CMD ["/bin/bash"]
+#CMD ["/bin/bash"]

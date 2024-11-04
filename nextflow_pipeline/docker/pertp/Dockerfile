@@ -29,4 +29,4 @@ RUN pip install rich scanpy[leiden] muon requests scikit-misc scipy scvi-tools a
 # RUN pip install pytest coverage
 
 # Start a shell when the container runs
-CMD ["/bin/bash"]
+#CMD ["/bin/bash"]

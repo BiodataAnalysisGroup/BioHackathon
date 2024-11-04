@@ -13,4 +13,4 @@ RUN pip install --no-cache-dir torch torchaudio torch_geometric
 RUN pip install --no-cache-dir tensorboard
 
 # Set the default command to bash
-CMD ["bash"]
+#CMD ["bash"]
