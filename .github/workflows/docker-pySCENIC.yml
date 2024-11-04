@@ -6,12 +6,13 @@ on:
       - main
     paths:
       - '**/docker/pySCENIC/Dockerfile'
+      - '**/workflows/docker-pySCENIC.yml'
 
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repositorCy as <account>/<repo>
-  IMAGE_NAME: ${{ github.actor }}/pySCENIC
+  IMAGE_NAME: ${{ github.repository }}/pySCENIC
 
 
 jobs:
