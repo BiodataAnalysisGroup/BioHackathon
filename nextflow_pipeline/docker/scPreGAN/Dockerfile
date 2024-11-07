@@ -31,4 +31,4 @@ RUN pip install anndata==0.7.4 h5py==2.10.0 pandas==1.1.3 scanpy==1.6.0 scapy==2
 # EXPOSE <port_number>
 
 # Command to run the application (adjust as necessary)
-CMD ["python", "your_script.py"]
+#CMD ["python", "your_script.py"]

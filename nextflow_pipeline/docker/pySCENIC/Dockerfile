@@ -37,3 +37,4 @@ COPY --from=compile-image /usr/local/bin /usr/local/bin
 ENV PATH="/usr/local/bin:$PATH"
 
 EXPOSE 8787
+

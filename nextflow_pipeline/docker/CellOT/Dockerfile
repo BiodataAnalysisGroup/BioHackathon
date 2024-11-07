@@ -36,4 +36,4 @@ RUN git clone https://github.com/bunnech/cellot.git /app/cellot && \
     pip install /app/cellot
 
 # Set the default command to open a bash shell
-CMD ["/bin/bash"]
+#CMD ["/bin/bash"]
