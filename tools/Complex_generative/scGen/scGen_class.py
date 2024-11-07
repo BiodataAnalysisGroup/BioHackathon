@@ -111,7 +111,8 @@ class scGenPerturbationAnalysis:
         print(cell_type_counts)
         print()
 
-    def preprocess_data(self):
+    def preprocess_data(self,
+                        apply_log1p = True):
         """
         Preprocess the data for scGen, including selecting highly variable genes,
         removing specific time points, and subsampling.
@@ -147,6 +148,11 @@ class scGenPerturbationAnalysis:
         # Normalize the data    
         sc.pp.normalize_total(self.data)
         print("Data normalized for scGen.")
+
+        if apply_log1p == True:
+            sc.pp.log1p(self.data)
+            print("Log(x+1) applied to the data set for scGen.")
+        
         print()
 
     def prepare_training_set(self,
