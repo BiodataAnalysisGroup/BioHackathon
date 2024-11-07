@@ -399,9 +399,11 @@ class scGenPerturbationAnalysis:
         Compute a distance metric (e.g., energy distance) to evaluate prediction accuracy.
         """
         print("Computing distance metric...")
-        # Perform PCA with 50 components on the evaluation data
+        if n_comps > min(self.eval_adata.shape):
+            n_comps=min(self.eval_adata.shape) - 1
+
         sc.tl.pca(self.eval_adata, n_comps)
-        print("PCA with 50 components computed.")
+        print("PCA with", n_comps, "components computed.")
         print()
 
         # Extract the subsets for real stimulated, control, and predicted data
