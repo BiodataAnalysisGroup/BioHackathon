@@ -7,4 +7,4 @@ RUN git clone https://github.com/aertslab/scenicplus
 
 RUN cd scenicplus && pip install .
 
-ENTRYPOINT ["python"]
+ENTRYPOINT ["/opt/conda/bin/python"]
