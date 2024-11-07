@@ -5,6 +5,5 @@ RUN conda install -y -n base -c conda-forge -c bioconda python=3.11 pip procps-n
 
 RUN git clone https://github.com/aertslab/scenicplus 
 
-
 RUN cd scenicplus && pip install .
 
