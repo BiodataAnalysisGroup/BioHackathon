@@ -377,21 +377,22 @@ class scGenPerturbationAnalysis:
         print(f"Mean expression correlation (R^2 value): {self.r2_value}")
         print()
 
-        # Plot mean expression correlation for top differentially expressed genes
-        self.r2_value, self.r_value_diff = self.scgen_model.plot_reg_mean_plot(
-            self.eval_adata,
-            condition_key=condition_key,
-            axis_keys={"x": "pred", "y": stim_key},
-            gene_list=self.diff_genes[:10],
-            top_100_genes=self.diff_genes,
-            x_coeff=3,
-            y_coeff=1,
-            labels={"x": "Predicted", "y": "Ground Truth"},
-            path_to_save="./reg_mean_diff_genes.pdf",
-            show=True,
-            legend=False
-        )
-        print(f"Mean expression correlation for top genes (R^2 value): {self.r2_value}")
+        # Plot mean expression correlation for top differentially expressed genes (this should be modified and R^2 calculated
+        # only for diff expressed genes)
+        #self.r2_value, self.r_value_diff = self.scgen_model.plot_reg_mean_plot(
+        #    self.eval_adata,
+        #    condition_key=condition_key,
+        #    axis_keys={"x": "pred", "y": stim_key},
+        #    gene_list=self.diff_genes[:10],
+        #    top_100_genes=self.diff_genes,
+        #    x_coeff=3,
+        #    y_coeff=1,
+        #    labels={"x": "Predicted", "y": "Ground Truth"},
+        #    path_to_save="./reg_mean_diff_genes.pdf",
+        #    show=True,
+        #    legend=False
+        #)
+        #print(f"Mean expression correlation for top genes (R^2 value): {self.r2_value}")
         print()
 
     def compute_distance_metric(self,
