@@ -1,5 +1,0 @@
-nextflow_pipeline/work
-nextflow_pipeline/results
-nextflow_pipeline/.nextflow*
-*.DS_Store
-.gitignore
