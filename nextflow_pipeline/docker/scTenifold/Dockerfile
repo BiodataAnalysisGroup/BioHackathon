@@ -33,4 +33,5 @@ RUN pip install importlib-metadata
 RUN sed -i 's/importlib.metadata/importlib_metadata/' /usr/local/lib/python3.7/site-packages/umap/__init__.py
 
 # Default command
-CMD ["python3"]
+#CMD ["python3"]
+

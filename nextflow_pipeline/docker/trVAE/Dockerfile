@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir adjustText==0.7.3 trvae
 # COPY . .
 
 # Define the default command to run when starting the container
-CMD ["python"]
+#CMD ["python"]

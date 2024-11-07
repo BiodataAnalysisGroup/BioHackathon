@@ -15,8 +15,8 @@ RUN pip install hatchling && \
     pip install pertpy
 
 # Install additional dependencies
-RUN pip install rich scanpy[leiden] muon requests scikit-misc scipy scvi-tools adjusttext decoupler \
-                ott-jax sparsecca openpyxl pubchempy pyarrow blitzgsea lamin_utils
+#RUN pip install rich scanpy[leiden] muon requests scikit-misc scipy scvi-tools adjusttext decoupler \
+#                ott-jax sparsecca openpyxl pubchempy pyarrow blitzgsea lamin_utils
 
 # Uncomment the lines below if you want to install additional optional dependencies
 # RUN pip install toytree arviz ete3 pyqt5
@@ -29,4 +29,4 @@ RUN pip install rich scanpy[leiden] muon requests scikit-misc scipy scvi-tools a
 # RUN pip install pytest coverage
 
 # Start a shell when the container runs
-CMD ["/bin/bash"]
+#CMD ["/bin/bash"]
