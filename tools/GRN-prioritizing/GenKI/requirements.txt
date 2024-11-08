@@ -1,0 +1,17 @@
+anndata
+matplotlib
+numpy
+pandas
+ray
+scanpy
+scipy
+statsmodels
+scikit_learn
+torch
+torch-scatter
+torch-sparse
+torch-spline-conv
+torch-cluster
+torch-geometric
+tqdm
+ipywidgets
