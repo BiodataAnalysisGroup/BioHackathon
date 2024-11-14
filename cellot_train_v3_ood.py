@@ -35,7 +35,7 @@ class ConfigNamespace(SimpleNamespace):
 
     def to_dict(self):
         """
-        Convertit récursivement l'objet ConfigNamespace en dictionnaire.
+        Recursively converts the ConfigNamespace object into a dictionary.
         """
         result = {}
         for key, value in self.__dict__.items():
@@ -46,19 +46,19 @@ class ConfigNamespace(SimpleNamespace):
         return result
 
     def as_dict(self):
-        """Renvoie l'instance sous forme de dictionnaire pour une utilisation sécurisée dans le code."""
+        """Returns the instance as a dictionary for secure use in code"""
         return self.to_dict()
 
     def __contains__(self, key):
         return key in self.__dict__
 
-# Fonction utilitaire pour transformer un dictionnaire en ConfigNamespace
+# transform a dictionnary in ConfigNamespace
 def dict_to_namespace(config_dict):
     return ConfigNamespace(**{k: dict_to_namespace(v) if isinstance(v, dict) else v for k, v in config_dict.items()})
 
-# Fonction pour convertir les objets ConfigNamespace en dictionnaire avant l'utilisation
+# Function for converting ConfigNamespace objects into a dictionary before use
 def convert_to_dict_if_namespace(obj):
-    """Convertit un ConfigNamespace en dictionnaire, récursivement si nécessaire."""
+    """converting ConfigNamespace objects into a dictionary"""
     if isinstance(obj, ConfigNamespace):
         return obj.to_dict()
     elif isinstance(obj, dict):
@@ -68,9 +68,7 @@ def convert_to_dict_if_namespace(obj):
 
 
 
-
 def run_cellot_training(task_config, model_config, train_type="cellot", outdir='./output'):
-    # Créer la structure de configuration avec tous les éléments nécessaires
     config = {
         'training': {
             'n_iters': task_config.get('epochs', 10),
@@ -103,13 +101,13 @@ def run_cellot_training(task_config, model_config, train_type="cellot", outdir='
         }
     }
 
-    # Convertir la configuration en un objet ConfigNamespace
+    # Transform in a ConfigNamespace
     config_ns = dict_to_namespace(config)
 
     # Convert outdir to Path object to ensure compatibility
     outdir = Path(outdir)
 
-    # Appeler la fonction d'entraînement en fonction du type de modèle choisi
+    # Call the model function
     if train_type == 'cellot':
         train_cellot(outdir, config_ns)
     elif train_type == 'auto_encoder':
@@ -117,7 +115,7 @@ def run_cellot_training(task_config, model_config, train_type="cellot", outdir='
     elif train_type == 'popalign':
         train_popalign(outdir, config_ns)
     else:
-        raise ValueError("Type d'entraînement non supporté : {}".format(train_type))
+        raise ValueError("Train type not supported: {}".format(train_type))
 
     print(f"Training complete for {train_type} model at {outdir}.")
 
@@ -213,7 +211,7 @@ for cell_type in cell_types:
 test_data_path = "C:\\Users\\Shadow\\Desktop\\BioHack24\\scPRAM\\processed_datasets_all\\datasets\\scrna-lupuspatients\\kang-hvg.h5ad"
 adata = sc.read_h5ad(test_data_path)
 input_dim = adata.shape[1]
-print("Nombre de caractéristiques (input_dim) :", input_dim)
+print("Number of variables (input_dim) :", input_dim)
 
 
 
@@ -222,12 +220,12 @@ print("Nombre de caractéristiques (input_dim) :", input_dim)
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Charger les données de perte
+# load losses data
 loss_data = pd.read_csv('.\\output_ood_models\\loss_tracking.csv')
 
-# Vérifier que les colonnes attendues sont bien présentes
+# Check for column
 if all(col in loss_data.columns for col in ['Step', 'Loss_G', 'Loss_F']):
-    # Tracer les pertes
+    # plot
     plt.figure(figsize=(10, 6))
     plt.plot(loss_data['Step'], loss_data['Loss_G'], label='Loss_G')
     plt.plot(loss_data['Step'], loss_data['Loss_F'], label='Loss_F')
@@ -238,5 +236,5 @@ if all(col in loss_data.columns for col in ['Step', 'Loss_G', 'Loss_F']):
     plt.title('Evolution of Losses (Loss G and Loss F) During Training')
     plt.show()
 else:
-    print("Les colonnes attendues 'step', 'loss_g', ou 'loss_f' ne sont pas présentes dans le fichier CSV.")
-#AF echelle log !!!
+    print("No 'Step', 'Loss_G', ou 'Loss_F' in the CSV file.")
+
