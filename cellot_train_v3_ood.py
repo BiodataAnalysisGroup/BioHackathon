@@ -1,17 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Nov 14 14:55:57 2024
-
-@author: Shadow
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 12 11:36:46 2024
-
-@author: Shadow
-"""
-
 import sys
 from pathlib import Path
 from cellot.train.train import train_cellot, train_auto_encoder, train_popalign
