@@ -19,7 +19,7 @@ class ConfigNamespace(SimpleNamespace):
 
     def to_dict(self):
         """
-        Convertit récursivement l'objet ConfigNamespace en dictionnaire.
+        Recursively converts the ConfigNamespace object into a dictionary.
         """
         result = {}
         for key, value in self.__dict__.items():
@@ -30,19 +30,19 @@ class ConfigNamespace(SimpleNamespace):
         return result
 
     def as_dict(self):
-        """Renvoie l'instance sous forme de dictionnaire pour une utilisation sécurisée dans le code."""
+        """Returns the instance as a dictionary for secure use in code"""
         return self.to_dict()
 
     def __contains__(self, key):
         return key in self.__dict__
 
-# Fonction utilitaire pour transformer un dictionnaire en ConfigNamespace
+# transform a dictionnary in ConfigNamespace
 def dict_to_namespace(config_dict):
     return ConfigNamespace(**{k: dict_to_namespace(v) if isinstance(v, dict) else v for k, v in config_dict.items()})
 
-# Fonction pour convertir les objets ConfigNamespace en dictionnaire avant l'utilisation
+# Function for converting ConfigNamespace objects into a dictionary before use
 def convert_to_dict_if_namespace(obj):
-    """Convertit un ConfigNamespace en dictionnaire, récursivement si nécessaire."""
+    """converting ConfigNamespace objects into a dictionary"""
     if isinstance(obj, ConfigNamespace):
         return obj.to_dict()
     elif isinstance(obj, dict):
@@ -104,20 +104,15 @@ def create_anndata_with_predictions(config, model_path, original_data):
 
     # Stack predictions into an array
     predicted_data_matrix = np.vstack(predicted_cells)
-    # Normalize predicted data to match original data's scale
+    # Normalize predicted data to match original data's scale ?
     # This assumes that the original data has been normalized with scanpy's `normalize_total`
     predicted_adata = anndata.AnnData(X=predicted_data_matrix)
-    #sc.pp.normalize_total(predicted_adata, target_sum=1e4)
-    #sc.pp.log1p(predicted_adata)
-    #predicted_data_matrix = predicted_adata.X
+
 
 
     # Step 3: Verify if predicted_data_matrix contains NaNs after prediction loop
     print(f"Step 3: Nombre de NaN dans predicted_data_matrix : {np.isnan(predicted_data_matrix).sum()}")
 
-    # Optional: Replace NaNs in `predicted_data_matrix` if needed
-    # predicted_data_matrix = np.nan_to_num(predicted_data_matrix)
-    # print(f"Step 3b: NaNs replaced. Nombre de NaN dans predicted_data_matrix après remplacement : {np.isnan(predicted_data_matrix).sum()}")
 
     # Combine predicted data matrix with the existing data matrix, ensuring no duplication with 'ctrl'
     original_data_matrix = (
@@ -125,11 +120,11 @@ def create_anndata_with_predictions(config, model_path, original_data):
     )
     
     # Step 4: Check for NaNs in the original data matrix
-    print(f"Step 4: Nombre de NaN dans original_data_matrix : {np.isnan(original_data_matrix).sum()}")
+    print(f"Step 4: Nomber of NaN in the original_data_matrix : {np.isnan(original_data_matrix).sum()}")
 
     # Step 5: Combine matrices and check for NaNs in the combined data
     combined_data = np.vstack([original_data_matrix, predicted_data_matrix])
-    print(f"Step 5: Nombre de NaN dans combined_data après concaténation : {np.isnan(combined_data).sum()}")
+    print(f"Step 5: Nomber of NaN in combined_data  : {np.isnan(combined_data).sum()}")
 
     # Copy original metadata and create labels for predictions
     combined_obs = original_data.obs.copy()
@@ -154,7 +149,7 @@ def create_anndata_with_predictions(config, model_path, original_data):
     anndata_with_predictions.obs_names_make_unique()
 
     # Step 6: Check if the final AnnData object contains NaNs in X
-    print(f"Step 6: Nombre de NaN dans anndata_with_predictions.X : {np.isnan(anndata_with_predictions.X).sum()}")
+    print(f"Step 6: Nomber of NaN in anndata_with_predictions.X : {np.isnan(anndata_with_predictions.X).sum()}")
 
     # Optional: If desired, set raw attribute for the AnnData object
     anndata_with_predictions.raw = anndata_with_predictions.copy()
@@ -184,7 +179,7 @@ for cell_type in cell_types:
         'shuffle': True,
         'datasplit_groupby': ['cell_type','condition'],
         'datasplit_name': 'toggle_ood',
-        'key' : 'cell_type',# Name for this data split
+        'key' : 'cell_type',
         'datasplit_mode': 'ood',           # Set mode to 'ood'
         'datasplit_holdout': holdout,      # Specify holdout cell type
         'datasplit_test_size': 0.3,
