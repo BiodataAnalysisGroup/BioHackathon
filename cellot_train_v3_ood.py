@@ -131,7 +131,7 @@ adata = anndata.read_h5ad("C:\\Users\\Shadow\\Desktop\\BioHack24\\scPRAM\\proces
 cell_types = adata.obs['cell_type'].unique()
 
 # Directory to save the models
-output_dir = '.\\output_ood_models'
+output_dir = '.\\output_ood_models_1'
 
 
 for cell_type in cell_types:

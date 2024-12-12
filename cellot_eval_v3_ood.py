@@ -161,7 +161,7 @@ def create_anndata_with_predictions(config, model_path, original_data):
 dataset_path = "C:\\Users\\Shadow\\Desktop\\BioHack24\\scPRAM\\processed_datasets_all\\datasets\\scrna-lupuspatients\\kang-hvg.h5ad"
 adata = sc.read_h5ad(dataset_path)
 cell_types = adata.obs['cell_type'].unique()
-output_dir = ".\\output_ood_models"
+output_dir = ".\\output_ood_models_1"
 
 for cell_type in cell_types:
     model_dir = os.path.join(output_dir, f"{cell_type}_ood")
@@ -256,6 +256,461 @@ for cell_type in cell_types:
     sc.tl.umap(holdout_cells)
     sc.pl.umap(holdout_cells, color="condition", title=f"UMAP for {cell_type}") 
     
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+from scipy import sparse
+import numpy as np
+
+# Initialisation du dictionnaire pour stocker les résultats R²
+r2_results = {}
+
+# Boucle sur chaque type cellulaire unique
+for cell_type in anndata_with_predictions.obs['cell_type'].unique():
+    # Filtrer les données pour ce type cellulaire
+    cell_data = anndata_with_predictions[anndata_with_predictions.obs['cell_type'] == cell_type]
+
+    # Extraire les données pour les conditions 'stim' et 'predicted'
+    stim_data = cell_data[cell_data.obs['condition'] == 'stim'].X
+    predicted_data = cell_data[cell_data.obs['condition'] == 'predicted'].X
+
+    # Convertir les matrices creuses en matrices denses si nécessaire
+    if sparse.issparse(stim_data):
+        stim_data = stim_data.toarray()
+    if sparse.issparse(predicted_data):
+        predicted_data = predicted_data.toarray()
+
+    # Calculer la moyenne d'expression pour chaque gène
+    stim_mean = stim_data.mean(axis=0)
+    predicted_mean = predicted_data.mean(axis=0)
+
+    # Calculer la corrélation de Pearson
+    r = np.corrcoef(stim_mean, predicted_mean)[0, 1]
+    r2 = r ** 2  # R² basé sur la corrélation de Pearson
+
+    # Stocker le résultat
+    r2_results[cell_type] = r2
+    print(f"R² pour {cell_type} entre les moyennes des gènes 'stim' et 'predicted' : {r2:.4f}")
+
+    # Préparer les données pour la visualisation
+    df_plot = pd.DataFrame({
+        'Stim Mean Expression': stim_mean,
+        'Predicted Mean Expression': predicted_mean
+    })
+
+    # Tracer le nuage de points avec la ligne de régression
+    plt.figure(figsize=(8, 6))
+    sns.regplot(
+        x='Stim Mean Expression',
+        y='Predicted Mean Expression',
+        data=df_plot,
+        scatter_kws={'s': 10},  # Taille des points
+        line_kws={'color': 'red'}  # Couleur de la ligne de régression
+    )
+    plt.title(f'Regression Plot for {cell_type}\nR² = {r2:.4f}')
+    plt.xlabel('Stim Mean Expression')
+    plt.ylabel('Predicted Mean Expression')
+    plt.grid(True)
+    plt.show()
+
+# Afficher tous les résultats R²
+print("\nR² entre les moyennes d'expression pour chaque type cellulaire entre 'stim' et 'predicted':")
+for cell_type, r2 in r2_results.items():
+    print(f"{cell_type}: {r2:.4f}")
+    
+
+
+from scipy.spatial.distance import cdist
+from scipy.sparse import issparse
+import numpy as np
+import pandas as pd
+import scanpy as sc
+
+def compute_edistance(set1, set2):
+    """
+    Compute the energy distance between two datasets.
+    """
+    intra_dist1 = np.mean(cdist(set1, set1, metric="euclidean"))
+    intra_dist2 = np.mean(cdist(set2, set2, metric="euclidean"))
+    inter_dist = np.mean(cdist(set1, set2, metric="euclidean"))
+    return 2 * inter_dist - intra_dist1 - intra_dist2
+
+def compute_perturbation_score_per_cell_type(anndata, 
+                                             n_comps=50, 
+                                             condition_col="condition", 
+                                             stim_key="stim", 
+                                             ctrl_key="ctrl", 
+                                             pred_key="predicted"):
+    """
+    Compute the perturbation score for each cell type.
+
+    Parameters:
+        anndata: AnnData object containing gene expression data.
+        n_comps: Number of principal components to use.
+        condition_col: Column name in `.obs` that specifies the condition.
+        stim_key: Key for the stimulated condition.
+        ctrl_key: Key for the control condition.
+        pred_key: Key for the predicted condition.
+        
+    Returns:
+        A dictionary mapping each cell type to its perturbation score.
+    """
+    perturbation_scores = {}
+
+    # Perform PCA on the data
+    if n_comps > min(anndata.shape):
+        n_comps = min(anndata.shape) - 1
+
+    sc.tl.pca(anndata, svd_solver="arpack", n_comps=n_comps)
+    print(f"PCA with {n_comps} components computed.\n")
+
+    # Iterate over each cell type
+    for cell_type in anndata.obs['cell_type'].unique():
+        print(f"Processing cell type: {cell_type}")
+
+        # Subset the data for the current cell type
+        cell_data = anndata[anndata.obs['cell_type'] == cell_type]
+
+        # Extract the subsets for stimulated, control, and predicted data
+        stim_adata = cell_data[cell_data.obs[condition_col] == stim_key]
+        ctrl_adata = cell_data[cell_data.obs[condition_col] == ctrl_key]
+        pred_adata = cell_data[cell_data.obs[condition_col] == pred_key]
+
+        # Skip if any subset is empty
+        if stim_adata.shape[0] == 0 or ctrl_adata.shape[0] == 0 or pred_adata.shape[0] == 0:
+            print(f"Skipping {cell_type} due to insufficient data.\n")
+            continue
+
+        # Extract PCA embeddings
+        stim_pca = stim_adata.obsm["X_pca"]
+        ctrl_pca = ctrl_adata.obsm["X_pca"]
+        pred_pca = pred_adata.obsm["X_pca"]
+
+        # Convert sparse matrices to dense
+        if issparse(stim_pca): stim_pca = stim_pca.toarray()
+        if issparse(ctrl_pca): ctrl_pca = ctrl_pca.toarray()
+        if issparse(pred_pca): pred_pca = pred_pca.toarray()
+
+        # Compute energy distances
+        edistance_stim_pred = compute_edistance(stim_pca, pred_pca)  # Perturbed vs Predicted
+        edistance_ctrl_pred = compute_edistance(ctrl_pca, pred_pca)  # Control vs Predicted
+
+        # Avoid division by zero
+        if edistance_ctrl_pred == 0:
+            perturbation_score = np.nan
+        else:
+            perturbation_score = edistance_stim_pred / edistance_ctrl_pred
+
+        perturbation_scores[cell_type] = perturbation_score
+        print(f"Perturbation score for {cell_type}: {perturbation_score}\n")
+
+    return perturbation_scores
+
+
+perturbation_scores = compute_perturbation_score_per_cell_type(
+    anndata=anndata_with_predictions,
+    n_comps=50,
+    condition_col="condition",
+    stim_key="stim",
+    ctrl_key="ctrl",
+    pred_key="predicted"
+)
+
+# Display the results
+print("Scaled perturbation scores for all cell types:")
+for cell_type, score in perturbation_scores.items():
+    print(f"{cell_type}: {score:.4f}")
+
+
+#-------------- mmd -------------------
+
+from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
+import numpy as np
+import pandas as pd
+import scanpy as sc
+
+def compute_mmd(set1, set2, kernel="linear", **kernel_kwargs):
+    """
+    Compute the Maximum Mean Discrepancy (MMD) between two datasets.
+    
+    Parameters:
+        set1: np.ndarray
+            First dataset (e.g., real perturbed data).
+        set2: np.ndarray
+            Second dataset (e.g., predicted data).
+        kernel: str
+            Type of kernel to use. Options are 'linear', 'rbf', and 'poly'.
+        **kernel_kwargs:
+            Additional arguments for the kernel function (e.g., gamma for RBF).
+            
+    Returns:
+        float
+            MMD score.
+    """
+    if kernel == "linear":
+        XX = np.dot(set1, set1.T)
+        YY = np.dot(set2, set2.T)
+        XY = np.dot(set1, set2.T)
+    elif kernel == "rbf":
+        XX = rbf_kernel(set1, set1, **kernel_kwargs)
+        YY = rbf_kernel(set2, set2, **kernel_kwargs)
+        XY = rbf_kernel(set1, set2, **kernel_kwargs)
+    elif kernel == "poly":
+        XX = polynomial_kernel(set1, set1, **kernel_kwargs)
+        YY = polynomial_kernel(set2, set2, **kernel_kwargs)
+        XY = polynomial_kernel(set1, set2, **kernel_kwargs)
+    else:
+        raise ValueError(f"Unsupported kernel type: {kernel}")
+
+    return XX.mean() + YY.mean() - 2 * XY.mean()
+
+def compute_mmd_per_cell_type(anndata, 
+                              n_comps=50, 
+                              condition_col="condition", 
+                              stim_key="stim", 
+                              ctrl_key="ctrl", 
+                              pred_key="predicted", 
+                              kernel="linear", 
+                              **kernel_kwargs):
+    """
+    Compute the MMD for each cell type.
+
+    Parameters:
+        anndata: AnnData
+            Annotated data matrix containing the data.
+        n_comps: int
+            Number of PCA components to use.
+        condition_col: str
+            Column in `.obs` specifying the condition of the cells.
+        stim_key: str
+            Key for the stimulated condition in `.obs`.
+        ctrl_key: str
+            Key for the control condition in `.obs`.
+        pred_key: str
+            Key for the predicted condition in `.obs`.
+        kernel: str
+            Kernel type for MMD. Options: 'linear', 'rbf', 'poly'.
+        **kernel_kwargs:
+            Additional parameters for the kernel function.
+
+    Returns:
+        dict
+            A dictionary mapping each cell type to its MMD perturbation score.
+    """
+    mmd_scores = {}
+
+    # Perform PCA on the data
+    if n_comps > min(anndata.shape):
+        n_comps = min(anndata.shape) - 1
+
+    sc.tl.pca(anndata, svd_solver="arpack", n_comps=n_comps)
+    print(f"PCA with {n_comps} components computed.\n")
+
+    # Iterate over each cell type
+    for cell_type in anndata.obs['cell_type'].unique():
+        print(f"Processing cell type: {cell_type}")
+
+        # Subset the data for the current cell type
+        cell_data = anndata[anndata.obs['cell_type'] == cell_type]
+
+        # Extract subsets for stimulated, control, and predicted data
+        stim_adata = cell_data[cell_data.obs[condition_col] == stim_key]
+        ctrl_adata = cell_data[cell_data.obs[condition_col] == ctrl_key]
+        pred_adata = cell_data[cell_data.obs[condition_col] == pred_key]
+
+        # Extract PCA embeddings
+        stim_pca = stim_adata.obsm["X_pca"]
+        ctrl_pca = ctrl_adata.obsm["X_pca"]
+        pred_pca = pred_adata.obsm["X_pca"]
+
+        # Compute MMD scores
+        mmd_stim_pred = compute_mmd(stim_pca, pred_pca, kernel=kernel, **kernel_kwargs)  # Stimulated vs Predicted
+        mmd_ctrl_pred = compute_mmd(ctrl_pca, pred_pca, kernel=kernel, **kernel_kwargs)  # Control vs Predicted
+
+        # Combine scores into a perturbation score
+        mmd_score = mmd_stim_pred / mmd_ctrl_pred
+        mmd_scores[cell_type] = mmd_score
+        print(f"MMD perturbation score for {cell_type}: {mmd_score}\n")
+
+    return mmd_scores
+
+# Compute MMD scores for all cell types
+mmd_scores = compute_mmd_per_cell_type(
+    anndata=anndata_with_predictions,
+    n_comps=50,
+    condition_col="condition",
+    stim_key="stim",
+    ctrl_key="ctrl",
+    pred_key="predicted",
+    kernel="linear"#,  # Example: using RBF kernel
+#    gamma=1.0  # Example parameter for the RBF kernel
+)
+
+# Display the results
+print("MMD perturbation scores for all cell types:")
+for cell_type, score in mmd_scores.items():
+    print(f"{cell_type}: {score:.4f}")
+
+#------------------ euclidean distances -------------------
+
+from sklearn.metrics.pairwise import euclidean_distances
+import numpy as np
+import pandas as pd
+import scanpy as sc
+
+def compute_mean_euclidean_distance(set1, set2):
+    """
+    Compute the mean Euclidean distance between two datasets.
+
+    Parameters:
+        set1: np.ndarray
+            First dataset (e.g., real perturbed data).
+        set2: np.ndarray
+            Second dataset (e.g., predicted data).
+            
+    Returns:
+        float
+            Mean Euclidean distance between set1 and set2.
+    """
+    pairwise_distances = euclidean_distances(set1, set2)
+    return pairwise_distances.mean()
+
+def compute_euclidean_distance_per_cell_type(anndata, 
+                                             n_comps=50, 
+                                             condition_col="condition", 
+                                             stim_key="stim", 
+                                             ctrl_key="ctrl", 
+                                             pred_key="predicted"):
+    """
+    Compute the mean Euclidean distance for each cell type.
+
+    Parameters:
+        anndata: AnnData
+            Annotated data matrix containing the data.
+        n_comps: int
+            Number of PCA components to use.
+        condition_col: str
+            Column in `.obs` specifying the condition of the cells.
+        stim_key: str
+            Key for the stimulated condition in `.obs`.
+        ctrl_key: str
+            Key for the control condition in `.obs`.
+        pred_key: str
+            Key for the predicted condition in `.obs`.
+
+    Returns:
+        dict
+            A dictionary mapping each cell type to its Euclidean perturbation score.
+    """
+    euclidean_scores = {}
+
+    # Perform PCA on the data
+    if n_comps > min(anndata.shape):
+        n_comps = min(anndata.shape) - 1
+
+    sc.tl.pca(anndata, svd_solver="arpack", n_comps=n_comps)
+    print(f"PCA with {n_comps} components computed.\n")
+
+    # Iterate over each cell type
+    for cell_type in anndata.obs['cell_type'].unique():
+        print(f"Processing cell type: {cell_type}")
+
+        # Subset the data for the current cell type
+        cell_data = anndata[anndata.obs['cell_type'] == cell_type]
+
+        # Extract subsets for stimulated, control, and predicted data
+        stim_adata = cell_data[cell_data.obs[condition_col] == stim_key]
+        ctrl_adata = cell_data[cell_data.obs[condition_col] == ctrl_key]
+        pred_adata = cell_data[cell_data.obs[condition_col] == pred_key]
+
+        # Extract PCA embeddings
+        stim_pca = stim_adata.obsm["X_pca"]
+        ctrl_pca = ctrl_adata.obsm["X_pca"]
+        pred_pca = pred_adata.obsm["X_pca"]
+
+        # Compute Euclidean distances
+        euclidean_stim_pred = compute_mean_euclidean_distance(stim_pca, pred_pca)  # Stimulated vs Predicted
+        euclidean_ctrl_pred = compute_mean_euclidean_distance(ctrl_pca, pred_pca)  # Control vs Predicted
+
+        # Combine scores into a perturbation score
+        euclidean_score = euclidean_stim_pred / euclidean_ctrl_pred
+        euclidean_scores[cell_type] = euclidean_score
+        print(f"Euclidean perturbation score for {cell_type}: {euclidean_score}\n")
+
+    return euclidean_scores
+
+# Compute Euclidean distance scores for all cell types
+euclidean_scores = compute_euclidean_distance_per_cell_type(
+    anndata=anndata_with_predictions,
+    n_comps=50,
+    condition_col="condition",
+    stim_key="stim",
+    ctrl_key="ctrl",
+    pred_key="predicted"
+)
+
+# Display the results
+print("Euclidean perturbation scores for all cell types:")
+for cell_type, score in euclidean_scores.items():
+    print(f"{cell_type}: {score:.4f}")
+
+
+# Bar plot with each metrics 
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Assurez-vous que les listes suivantes contiennent les données réelles générées
+cell_types = list(r2_results.keys())  # Les types cellulaires
+
+
+r2_scores = [float(val) for val in r2_results.values()]  # Conversion si nécessaire
+edistances = [float(val) for val in perturbation_scores.values()]  # Conversion si nécessaire
+mmd_res = [float(val) for val in mmd_scores.values()]  # Conversion des ArrayView
+euclidean_dist = [float(val) for val in euclidean_scores.values()]  # Conversion si nécessaire
+
+
+
+
+# Configuration des sous-graphiques
+fig, axes = plt.subplots(1, 4, figsize=(16, 8), sharey=True)
+
+# Graphique pour R² Scores
+axes[0].barh(cell_types, r2_scores, color='blue', edgecolor='black')
+axes[0].set_title("R² Scores")
+axes[0].set_xlabel("Valeur")
+axes[0].invert_yaxis()  # Alignement des types cellulaires sur tous les graphiques
+
+# Graphique pour Energy Distance
+axes[1].barh(cell_types, edistances, color='green', edgecolor='black')
+axes[1].set_title("Energy Distance")
+axes[1].set_xlabel("Valeur")
+
+# Graphique pour MMD Scores
+axes[2].barh(cell_types, mmd_res, color='orange', edgecolor='black')
+axes[2].set_title("MMD Scores")
+axes[2].set_xlabel("Valeur")
+
+# Graphique pour Euclidean Distance
+axes[3].barh(cell_types, euclidean_dist, color='red', edgecolor='black')
+axes[3].set_title("Euclidean Distance")
+axes[3].set_xlabel("Valeur")
+
+# Ajuster l'espacement entre les sous-graphiques
+plt.tight_layout()
+
+# Afficher le graphique
+plt.show()
+
+
+
+
+
+
+
+
 
 
 

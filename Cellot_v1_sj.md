@@ -59,9 +59,9 @@ Once models are trained, the `cellot_eval_v3_ood.py` script enables evaluation o
    - The script generates PCA and UMAP visualizations, specifically for the holdout cell type (excluded during training) for each trained model.
    - These plots allow direct visual inspection of predicted cell distributions compared to actual data, providing insights into the model's performance in the OOD setting.
 
-2. **Performance Metrics (in progress)**:
+2. **Performance Metrics**:
    - **R² Score**: Calculating R² for the predicted versus actual values helps quantify the model’s prediction accuracy for each cell type.
-   - **Transport Distance**: In progress !! The distances (euclidian, e and mmd), a transport function metric, assesses how accurately the model translates control cells into their perturbed states.
+   - **Transport Distance**: In progress !! The distances (euclidian, edistance and mmd), transport function metrics, assesses how accurately the model translates control cells into their perturbed states.
 
 The evaluation process allows detailed analysis of each model's performance per cell type, facilitating further adjustments and optimization of model parameters.
 
