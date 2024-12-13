@@ -12,12 +12,14 @@ The Cellot model requires an AnnData object that contains information for two co
 
 ### Data Requirements
 - **Data format**: The data should be in an AnnData structure compatible with single-cell analysis tools like Scanpy. Each observation in AnnData should include metadata in the `.obs` attribute, including cell type and condition.
-  
+-  **Issue with Pertpy anndata objects**: You need to save the metadata and matrix counts of pertpy datasets (in the pertpy environment, anndata version 0.10.8) and then rebuild the anndata objects in the cellOT environment with anndata version 0.7.6, which does not read anndata objects saved in 0.10.8.
+
 - **Data Normalization**: 
   - Normalization is essential for consistent model performance. Using the `normalize_total` and `log1p` function in Scanpy.
   - **Scaling**: its specific impact on Cellot is still being evaluated, though standardizing features across cells may be beneficial for model performance..don't know yet
 
 After preparing and normalizing data, save the AnnData object for input into the Cellot model training and evaluation scripts.
+
 
 ---
 
@@ -61,7 +63,7 @@ Once models are trained, the `cellot_eval_v3_ood.py` script enables evaluation o
 
 2. **Performance Metrics**:
    - **R² Score**: Calculating R² for the predicted versus actual values helps quantify the model’s prediction accuracy for each cell type.
-   - **Transport Distance**: In progress !! The distances (euclidian, edistance and mmd), transport function metrics, assesses how accurately the model translates control cells into their perturbed states.
+   - **Transport Distance**: The distances (euclidian, edistance and mmd), transport function metrics, assesses how accurately the model translates control cells into their perturbed states.
 
 The evaluation process allows detailed analysis of each model's performance per cell type, facilitating further adjustments and optimization of model parameters.
 

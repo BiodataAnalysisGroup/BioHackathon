@@ -256,6 +256,7 @@ for cell_type in cell_types:
     sc.tl.umap(holdout_cells)
     sc.pl.umap(holdout_cells, color="condition", title=f"UMAP for {cell_type}") 
     
+#---------------------- R² -----------------------
 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -263,43 +264,43 @@ import pandas as pd
 from scipy import sparse
 import numpy as np
 
-# Initialisation du dictionnaire pour stocker les résultats R²
+# R² dictionnary initialization
 r2_results = {}
 
-# Boucle sur chaque type cellulaire unique
+# Loop on cell types 
 for cell_type in anndata_with_predictions.obs['cell_type'].unique():
-    # Filtrer les données pour ce type cellulaire
+    
     cell_data = anndata_with_predictions[anndata_with_predictions.obs['cell_type'] == cell_type]
 
-    # Extraire les données pour les conditions 'stim' et 'predicted'
+    # Extract data on each condition 'stim' and 'predicted' for the specific cell type
     stim_data = cell_data[cell_data.obs['condition'] == 'stim'].X
     predicted_data = cell_data[cell_data.obs['condition'] == 'predicted'].X
 
-    # Convertir les matrices creuses en matrices denses si nécessaire
+    # if necessary convert sparce matrix
     if sparse.issparse(stim_data):
         stim_data = stim_data.toarray()
     if sparse.issparse(predicted_data):
         predicted_data = predicted_data.toarray()
 
-    # Calculer la moyenne d'expression pour chaque gène
+    # expression mean on each genes
     stim_mean = stim_data.mean(axis=0)
     predicted_mean = predicted_data.mean(axis=0)
 
-    # Calculer la corrélation de Pearson
+    # Pearson correlations
     r = np.corrcoef(stim_mean, predicted_mean)[0, 1]
     r2 = r ** 2  # R² basé sur la corrélation de Pearson
 
-    # Stocker le résultat
+    # Store the result
     r2_results[cell_type] = r2
-    print(f"R² pour {cell_type} entre les moyennes des gènes 'stim' et 'predicted' : {r2:.4f}")
+    print(f"R² for {cell_type} between 'stim' and 'predicted' mean genes: {r2:.4f}")
 
-    # Préparer les données pour la visualisation
+    # Data process to visualization
     df_plot = pd.DataFrame({
         'Stim Mean Expression': stim_mean,
         'Predicted Mean Expression': predicted_mean
     })
 
-    # Tracer le nuage de points avec la ligne de régression
+    # RegPlot
     plt.figure(figsize=(8, 6))
     sns.regplot(
         x='Stim Mean Expression',
@@ -314,12 +315,12 @@ for cell_type in anndata_with_predictions.obs['cell_type'].unique():
     plt.grid(True)
     plt.show()
 
-# Afficher tous les résultats R²
-print("\nR² entre les moyennes d'expression pour chaque type cellulaire entre 'stim' et 'predicted':")
+# Print R² results
+print("\nR² of mean expression genes for each cell type between 'stim' and 'predicted' cells:")
 for cell_type, r2 in r2_results.items():
     print(f"{cell_type}: {r2:.4f}")
     
-
+#----------- edistance --------------
 
 from scipy.spatial.distance import cdist
 from scipy.sparse import issparse
@@ -656,52 +657,50 @@ for cell_type, score in euclidean_scores.items():
     print(f"{cell_type}: {score:.4f}")
 
 
-# Bar plot with each metrics 
+#-------------------- Bar plot with each metrics ----------------
 
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Assurez-vous que les listes suivantes contiennent les données réelles générées
-cell_types = list(r2_results.keys())  # Les types cellulaires
 
-
-r2_scores = [float(val) for val in r2_results.values()]  # Conversion si nécessaire
-edistances = [float(val) for val in perturbation_scores.values()]  # Conversion si nécessaire
-mmd_res = [float(val) for val in mmd_scores.values()]  # Conversion des ArrayView
-euclidean_dist = [float(val) for val in euclidean_scores.values()]  # Conversion si nécessaire
+cell_types = list(r2_results.keys())  # cell types 
+r2_scores = [float(val) for val in r2_results.values()]  # Convert if necessary
+edistances = [float(val) for val in perturbation_scores.values()]  # Convert if necessary
+mmd_res = [float(val) for val in mmd_scores.values()]  # Convert if necessary
+euclidean_dist = [float(val) for val in euclidean_scores.values()]  # Convert if necessary
 
 
 
 
-# Configuration des sous-graphiques
+# Config of sub-graphs
 fig, axes = plt.subplots(1, 4, figsize=(16, 8), sharey=True)
 
-# Graphique pour R² Scores
+# Graph of R² Scores
 axes[0].barh(cell_types, r2_scores, color='blue', edgecolor='black')
 axes[0].set_title("R² Scores")
 axes[0].set_xlabel("Valeur")
-axes[0].invert_yaxis()  # Alignement des types cellulaires sur tous les graphiques
+axes[0].invert_yaxis()  # Aligment of cell types on all graphs 
 
-# Graphique pour Energy Distance
+# Graph of Energy Distances
 axes[1].barh(cell_types, edistances, color='green', edgecolor='black')
 axes[1].set_title("Energy Distance")
 axes[1].set_xlabel("Valeur")
 
-# Graphique pour MMD Scores
+# Graph of MMD Scores
 axes[2].barh(cell_types, mmd_res, color='orange', edgecolor='black')
 axes[2].set_title("MMD Scores")
 axes[2].set_xlabel("Valeur")
 
-# Graphique pour Euclidean Distance
+# Graph of Euclidean Distance
 axes[3].barh(cell_types, euclidean_dist, color='red', edgecolor='black')
 axes[3].set_title("Euclidean Distance")
 axes[3].set_xlabel("Valeur")
 
-# Ajuster l'espacement entre les sous-graphiques
+# Spaces between sub-graphs
 plt.tight_layout()
 
-# Afficher le graphique
+# plot
 plt.show()
 
 
