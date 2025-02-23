@@ -1,0 +1,5 @@
+SCENIC+ is a Snakemake-based pipeline for gene regulatory network (GRN) inference that integrates single-cell RNA-seq and single-cell chromatin accessibility data (ATAC-seq). While it provides a structured approach to analyzing these data types, it comes with several technical requirements that users should be aware of.
+
+The tool requires significant data preprocessing before analysis, including formatting and quality control steps. Additionally, it relies on a large database file that needs to be downloaded, which can take up considerable storage space (30-50 Gb). Computationally, SCENIC+ demands a substantial amount of RAM to run efficiently, especially with large datasets. While it can run on systems with lower memory, this may lead to slower processing times.
+
+SCENIC+ can be useful for GRN analysis but requires preparation in terms of data handling, storage, and computational resources. The definite upside of SCENIC+ is the possibility to not only simulate digital gene knock outs, but also gene knock downs and gene overexpressions.
